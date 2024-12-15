@@ -43,6 +43,8 @@ func Start(bot *telego.Bot, message *telego.Message) {
 они выданы - просто проигнорируйте 
 это сообщение.
 
+💡 Проверить права - !status
+
 ⚙️ Посмотреть команды - !help
 `
 		param := telego.SendMessageParams{
@@ -212,28 +214,41 @@ func Report(bot *telego.Bot, update *telego.Update) {
 		return 
 	}
 
-	config, _ := utils.GetConfig()
 	text := fmt.Sprintf(`
 🆘 Репорт из чата <b>%v</b>:
 Пользователь <code>%v</code> пожаловался на пользователя <code>%v</code>
-из-за:
-<blockquote>%s</blockquote>`, 
+из-за: <blockquote>%v</blockquote>`, 
 	update.Message.Chat.Title, 
 	update.Message.From.ID,
 	target.From.ID,
-	update.Message.Text,
+	update.Message.ReplyToMessage.Text,
 )
-	bot.SendMessage(&telego.SendMessageParams{
-		ChatID: config.ModerId, // TODO: изменить на конкретного админа чата
-		Text: text,
-		ParseMode: telego.ModeHTML,
+
+	admins, _ := bot.GetChatAdministrators(&telego.GetChatAdministratorsParams{
+		ChatID: update.Message.Chat.ChatID(),
 	})
+	for _, admin := range admins{
+		_, err := bot.SendMessage(&telego.SendMessageParams{
+			ChatID: telego.ChatID{ID: admin.MemberUser().ID},
+			Text: text,
+			ParseMode: telego.ModeHTML,
+		})
+		if err == nil {
+			bot.SendMessage(&telego.SendMessageParams{
+				ChatID: update.Message.Chat.ChatID(),
+				Text: fmt.Sprintf("✅ Админ %v получил уведомление", admin.MemberUser().ID),
+			})
+			return 
+		}
+	}
 	bot.SendMessage(&telego.SendMessageParams{
 		ChatID: update.Message.Chat.ChatID(),
-		Text: "✅ Админ получил уведомление",
+		Text: `
+❌ Нет доступных админов. Админ должен быть админом 
+в этой группе и должен запустить бота командой /start 
+в личных сообщениях.`,
 	})
-
-
+	return
 }
 
 func Status(bot *telego.Bot, update *telego.Update) {

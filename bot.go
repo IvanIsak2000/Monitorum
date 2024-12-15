@@ -6,7 +6,7 @@ import (
 	"monitorum/handlers"
 	"monitorum/utils"
 	"strings"
-
+	"time"
 	"github.com/mymmrac/telego"
 )
 
@@ -59,6 +59,7 @@ func main() {
 
 			// Удаление сообщение если чат под защитой
 			if utils.IsProtect(update.Message.Chat.ID) {
+				go time.Sleep(1 * time.Second)
 				botInstance.Bot.DeleteMessage(&telego.DeleteMessageParams{
 					ChatID: update.Message.Chat.ChatID(),
 					MessageID: update.Message.MessageID})
@@ -91,7 +92,7 @@ func main() {
 					handlers.Start(botInstance.Bot, update.Message)
 				case "!status":
 						handlers.Status(botInstance.Bot, &update)
-				case "!ban": 
+				case "!ban":  //  добавить аргумент userId
 					if utils.UserIsAdmin(botInstance.Bot, &update){
 						handlers.Ban(botInstance.Bot, &update)
 					} else {
