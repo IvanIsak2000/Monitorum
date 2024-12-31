@@ -6,22 +6,36 @@ import (
 	"time"
 )
 
+type ChatItem struct{
+	IsProtected bool
+	Autoban bool
+}
 
-var ProtectionChats map[int64]bool
+var ProtectionChats map[int64]ChatItem
 
 func init() {
 	// Инициализация глобальной переменной ProtectionChats
-	ProtectionChats = make(map[int64]bool)
+	ProtectionChats = make(map[int64]ChatItem)
 }
 
 
-func AddChat(bot *telego.Bot, update *telego.Update) {
-	ProtectionChats[update.Message.Chat.ID] = true
+func AddChat(bot *telego.Bot, update *telego.Update, autoban bool) {
+	ProtectionChats[update.Message.Chat.ID] = ChatItem{
+		IsProtected: true,
+		Autoban: autoban,
+	}
+
+	base_text := "🚨 ВКЛЮЧЕН АНТИРЕЙД РЕЖИМ 🚨\nВСЕ СООБЩЕНИЯ В ТЕЧЕНИИ 60 СЕКУНД БУДУТ УДАЛЯТЬСЯ"
+	if autoban{
+		base_text += " А ОТПРАВИТЕЛИ БАНИТЬСЯ"
+	}
+
 	notif_msg, _ := bot.SendMessage(
 		&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "🚨 ВКЛЮЧЕН АНТИРЕЙД РЕЖИМ 🚨\nВСЕ СООБЩЕНИЯ В ТЕЧЕНИИ 60 СЕКУНД БУДУТ УДАЛЯТЬСЯ"})
-	fmt.Printf("Чат %v добавлен в защиту\n", update.Message.Chat.ID)
+			Text: base_text})
+	fmt.Printf("Чат %v %v добавлен в защиту\n", update.Message.Chat.ID, update.Message.Chat.Title)
+	
 	go func() {
 		time.Sleep(60 * time.Second)
 		DeleteChat(bot, update, notif_msg)
@@ -41,14 +55,25 @@ func DeleteChat(bot *telego.Bot, update *telego.Update, notif_msg *telego.Messag
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-				Text: "✅ Антирейд режим отключен.\nТеперь можно свободно писать сообщения."})
-		fmt.Printf("Чат %v удалён из списка защиты\n", update.Message.Chat.ID)
+				Text: "✅ Антирейд режим отключен.\nСвобода слова восстановлена!"})
+		fmt.Printf(
+			"Чат %v %v удалён из списка защиты\n", update.Message.Chat.ID, update.Message.Chat.Title)
 	} else {
-		fmt.Printf("Чат %v не найден в списке защиты\n", update.Message.Chat.ID)
+		fmt.Printf(
+			"Чат %v %v не найден в списке защиты\n", update.Message.Chat.ID, update.Message.Chat.Title)
 	}
 }
 
 func IsProtect(chatID int64) bool {
-	return ProtectionChats[chatID]
+	if res, exitst := ProtectionChats[chatID]; exitst{
+		return res.IsProtected
+	}
+	return false
 }
 
+func IsAutoban(chatID int64) bool {
+	if res, exitst := ProtectionChats[chatID]; exitst{
+		return res.Autoban
+	}
+	return false
+}

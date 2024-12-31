@@ -60,31 +60,59 @@ func main() {
 			// Удаление сообщение если чат под защитой
 			if utils.IsProtect(update.Message.Chat.ID) {
 				go time.Sleep(1 * time.Second)
+				
+				// Удаляем сообщение
 				botInstance.Bot.DeleteMessage(&telego.DeleteMessageParams{
 					ChatID: update.Message.Chat.ChatID(),
 					MessageID: update.Message.MessageID})
+				// Если автобан - баним отправителя
+				if utils.IsAutoban(update.Message.Chat.ID){
+					handlers.BanForAutoban(botInstance.Bot, &update)
+				}
 			}
 
-			// удалние системного уведомления если это вступлени/выход из чата
+			// Удаление системного уведомления если это вступлени/выход из чата
+			//
 			if update.Message.NewChatMembers != nil {
 				for _, user := range update.Message.NewChatMembers{
-					fmt.Printf("Новый участник %v в чате %v\n", user.ID, update.Message.Chat.ID)
+					fmt.Printf(
+						"👉 Новый участник %v в чате %v %v\n", user.ID, update.Message.From.ID, update.Message.Chat.FirstName)
 					botInstance.Bot.DeleteMessage(
 						&telego.DeleteMessageParams{
 							ChatID: update.Message.Chat.ChatID(),
 							MessageID: update.Message.MessageID,
 						})
-				}
+				} 
 			}
+
+			// Участник вышел 
+			//
 			if update.Message.LeftChatMember != nil{
-				fmt.Printf("Участник %v вышел из %v\n", update.Message.LeftChatMember.ID, update.Message.Chat.ID)
+				fmt.Printf(
+					"👈 Участник %v вышел из %v %v\n", update.Message.LeftChatMember.ID, update.Message.Chat.ID, update.Message.Chat.FirstName)
 				botInstance.Bot.DeleteMessage(&telego.DeleteMessageParams{
 					ChatID: update.Message.Chat.ChatID(),
 					MessageID: update.Message.MessageID,
 				})
-
 			}
 
+			// Обработка защиты чата
+			if strings.HasPrefix(text, "!protect"){
+				autoban := false
+
+				arguments := strings.Split(text, " ")
+				if len(arguments) > 1 && arguments[1] == "on"{
+					autoban = true
+				}
+
+				if utils.UserIsAdmin(botInstance.Bot, &update){
+					handlers.Protect(botInstance.Bot, &update, autoban)
+				} else {
+					handlers.YouAreNotAdmin(botInstance.Bot, &update)
+				}
+			}
+			
+			// Обработка прочих команд
 			switch text{
 				case "!start": 
 					handlers.Start(botInstance.Bot, update.Message)
@@ -100,12 +128,6 @@ func main() {
 					}
 				case "!report":
 					handlers.Report(botInstance.Bot, &update)
-				case "!protect":
-					if utils.UserIsAdmin(botInstance.Bot, &update){
-						handlers.Protect(botInstance.Bot, &update)
-					} else {
-						handlers.YouAreNotAdmin(botInstance.Bot, &update)
-					}
 				default:
 					if strings.HasPrefix(text, "!"){
 						handlers.Help(botInstance.Bot, update.Message)

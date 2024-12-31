@@ -86,8 +86,10 @@ func Help(bot *telego.Bot, message *telego.Message) {
 
 <code>!report</code> - Вызвать модератора. Поможет админу заметить нарушителя.
 
-<code>!protect</code> - Включить антирейд режим. Удаляет все отправленные сообщения
-за следующие 60 секунд.
+<code>!protect [BAN MODE]</code> - Включить антирейд режим. Удаляет все отправленные сообщения за следующие 60 секунд.
+аргумент BAN MODE:
+on - включает автобан
+off - отключает автобан
 
 <code>!help</code> - Вызвать это меню.
 		`
@@ -111,6 +113,7 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 		return
 	}
 
+	// Проверка на то, что у бота есть права
 	me, _ := bot.GetMe()
 	if !utils.BotIsAdmin(bot, me.ID, update.Message.Chat.ID){
 		bot.SendMessage(&telego.SendMessageParams{
@@ -120,6 +123,8 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 
 	}
 
+
+
 	// Проверка, что это именно ответ на сообщение 
 	target := update.Message.ReplyToMessage
 	if target == nil{
@@ -128,6 +133,8 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 			Text: "❌ Для ликвидации необходимо ответить на сообщение с !ban"})
 		return
 	}
+
+	// Проверка, что бан не для самого пользователя
 	if target.From.ID == update.Message.From.ID{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
@@ -154,7 +161,8 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Не удалось ликвидировать пользователя"})
+			Text: fmt.Sprintf("❌ Не удалось ликвидировать пользователя %v", target.From.ID),
+		})
 	} else {
 		text := fmt.Sprintf("✅ Пользователь %v успешно ликвидирован", target.From.ID)
 		bot.SendMessage(&telego.SendMessageParams{
@@ -164,14 +172,64 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 }
 
 
-func Protect(bot *telego.Bot, update *telego.Update) {
+func BanForAutoban(bot *telego.Bot, update *telego.Update) {
+	// Проверка, что чат это группу или супергруппа
+	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
+		bot.SendMessage(&telego.SendMessageParams{
+			ChatID: update.Message.Chat.ChatID(),
+			Text: "❌ Команду /ban можно использовать только в группе или супергруппе"})
+		return
+	}
+
+	// Проверка на то, что у бота есть права
+	me, _ := bot.GetMe()
+	if !utils.BotIsAdmin(bot, me.ID, update.Message.Chat.ID){
+		bot.SendMessage(&telego.SendMessageParams{
+			ChatID: update.Message.Chat.ChatID(),
+			Text: "❌ У меня нет прав. Дайте мне права администратора"})
+		return
+
+	}
+
+	// Получение бота
+	if update.Message.From.ID == me.ID{
+		bot.SendMessage(
+			&telego.SendMessageParams{
+				ChatID: update.Message.Chat.ChatID(),
+				Text: "❌ Я не могу забанить себя"})
+		return 
+	}
+
+	// Сам бан
+	err := bot.BanChatMember(
+		&telego.BanChatMemberParams{
+			ChatID: update.Message.Chat.ChatID(),
+			UserID: update.Message.From.ID,
+			RevokeMessages: true})
+	if err != nil {
+		bot.SendMessage(
+			&telego.SendMessageParams{
+				ChatID: update.Message.Chat.ChatID(),
+			Text: fmt.Sprintf("❌ Не удалось ликвидировать пользователя %v", update.Message.From.ID),
+		})
+	} else {
+		text := fmt.Sprintf("✅ Пользователь %v успешно ликвидирован", update.Message.From.ID)
+		bot.SendMessage(&telego.SendMessageParams{
+			ChatID: update.Message.Chat.ChatID(),
+			Text: text})
+	}
+
+
+}
+
+func Protect(bot *telego.Bot, update *telego.Update, autoban bool) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
 			Text: "❌ Команду !protect можно использовать только в группе или супергруппе"})
 		return
 	}
-	utils.AddChat(bot, update)
+	utils.AddChat(bot, update, autoban)
 
 }
 
@@ -248,7 +306,6 @@ func Report(bot *telego.Bot, update *telego.Update) {
 в этой группе и должен запустить бота командой /start 
 в личных сообщениях.`,
 	})
-	return
 }
 
 func Status(bot *telego.Bot, update *telego.Update) {
