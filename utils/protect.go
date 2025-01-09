@@ -33,7 +33,11 @@ func AddChat(bot *telego.Bot, update *telego.Update, autoban bool) {
 	notif_msg, _ := bot.SendMessage(
 		&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: base_text})
+			Text: base_text,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 	fmt.Printf("Чат %v %v добавлен в защиту\n", update.Message.Chat.ID, update.Message.Chat.Title)
 	
 	go func() {
@@ -55,7 +59,11 @@ func DeleteChat(bot *telego.Bot, update *telego.Update, notif_msg *telego.Messag
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-				Text: "✅ Антирейд режим отключен.\nСвобода слова восстановлена!"})
+				Text: "✅ Антирейд режим отключен.\nСвобода слова восстановлена!",
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
+			})
 		fmt.Printf(
 			"Чат %v %v удалён из списка защиты\n", update.Message.Chat.ID, update.Message.Chat.Title)
 	} else {

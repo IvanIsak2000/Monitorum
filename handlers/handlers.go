@@ -25,6 +25,9 @@ func Start(bot *telego.Bot, message *telego.Message) {
 		param := telego.SendMessageParams{
 			ChatID: message.Chat.ChatID(),
 			Text: msg,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: message.MessageID,
+			},
 		}
 		bot.SendMessage(&param)
 
@@ -50,6 +53,9 @@ func Start(bot *telego.Bot, message *telego.Message) {
 		param := telego.SendMessageParams{
 			ChatID: message.Chat.ChatID(),
 			Text: msg,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: message.MessageID,
+			},
 		}
 		_, err := bot.SendMessage(&param)
 		if err != nil{
@@ -70,6 +76,9 @@ func Help(bot *telego.Bot, message *telego.Message) {
 		param := telego.SendMessageParams{
 			ChatID: message.Chat.ChatID(),
 			Text: msg,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: message.MessageID,
+			},
 		}
 		_, err := bot.SendMessage(&param)
 		if err != nil{
@@ -96,7 +105,10 @@ off - отключает автобан
 				param := telego.SendMessageParams{
 					ChatID: message.Chat.ChatID(),
 					Text: msg,
-					ParseMode: telego.ModeHTML}
+					ParseMode: telego.ModeHTML,
+					ReplyParameters: &telego.ReplyParameters{
+						MessageID: message.MessageID,
+					},}
 				_, err := bot.SendMessage(&param)
 				if err != nil{
 					fmt.Println(err)}}
@@ -109,7 +121,10 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Команду /ban можно использовать только в группе или супергруппе"})
+			Text: "❌ Команду /ban можно использовать только в группе или супергруппе",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},})
 		return
 	}
 
@@ -118,7 +133,11 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 	if !utils.BotIsAdmin(bot, me.ID, update.Message.Chat.ID){
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ У меня нет прав. Дайте мне права администратора"})
+			Text: "❌ У меня нет прав. Дайте мне права администратора",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 
 	}
@@ -130,7 +149,11 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 	if target == nil{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Для ликвидации необходимо ответить на сообщение с !ban"})
+			Text: "❌ Для ликвидации необходимо ответить на сообщение с !ban",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 
@@ -138,7 +161,11 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 	if target.From.ID == update.Message.From.ID{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Вы не можете забанить себя"})
+			Text: "❌ Вы не можете забанить себя",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 	
@@ -147,7 +174,11 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-				Text: "❌ Я не могу забанить себя"})
+				Text: "❌ Я не могу забанить себя",
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
+			})
 		return 
 	}
 
@@ -161,13 +192,20 @@ func Ban(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
 			Text: fmt.Sprintf("❌ Не удалось ликвидировать пользователя %v", target.From.ID),
 		})
 	} else {
 		text := fmt.Sprintf("✅ Пользователь %v успешно ликвидирован", target.From.ID)
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: text})
+			Text: text,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 	}
 }
 
@@ -177,7 +215,10 @@ func BanForAutoban(bot *telego.Bot, update *telego.Update) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Команду /ban можно использовать только в группе или супергруппе"})
+			Text: "❌ Команду /ban можно использовать только в группе или супергруппе",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},})
 		return
 	}
 
@@ -186,7 +227,11 @@ func BanForAutoban(bot *telego.Bot, update *telego.Update) {
 	if !utils.BotIsAdmin(bot, me.ID, update.Message.Chat.ID){
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ У меня нет прав. Дайте мне права администратора"})
+			Text: "❌ У меня нет прав. Дайте мне права администратора",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 
 	}
@@ -196,7 +241,11 @@ func BanForAutoban(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-				Text: "❌ Я не могу забанить себя"})
+				Text: "❌ Я не могу забанить себя",
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
+			})
 		return 
 	}
 
@@ -210,13 +259,20 @@ func BanForAutoban(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
 			Text: fmt.Sprintf("❌ Не удалось ликвидировать пользователя %v", update.Message.From.ID),
 		})
 	} else {
 		text := fmt.Sprintf("✅ Пользователь %v успешно ликвидирован", update.Message.From.ID)
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: text})
+			Text: text,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 	}
 
 
@@ -226,7 +282,12 @@ func Protect(bot *telego.Bot, update *telego.Update, autoban bool) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Команду !protect можно использовать только в группе или супергруппе"})
+			Text: "❌ Команду !protect можно использовать только в группе или супергруппе",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+			
+		})
 		return
 	}
 	utils.AddChat(bot, update, autoban)
@@ -236,14 +297,22 @@ func Protect(bot *telego.Bot, update *telego.Update, autoban bool) {
 func YouAreNotAdmin(bot *telego.Bot, update *telego.Update) {
 	bot.SendMessage(&telego.SendMessageParams{
 		ChatID: update.Message.Chat.ChatID(),
-		Text: "❌ Эту команду может использовать только админ"})
+		Text: "❌ Эту команду может использовать только админ",
+		ReplyParameters: &telego.ReplyParameters{
+			MessageID: update.Message.MessageID,
+		},
+	})
 }
 
 func Report(bot *telego.Bot, update *telego.Update) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Команду !report можно использовать только в группе или супергруппе"})
+			Text: "❌ Команду !report можно использовать только в группе или супергруппе",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 
@@ -253,13 +322,21 @@ func Report(bot *telego.Bot, update *telego.Update) {
 	if target == nil{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Для репорта необходимо ответить на сообщение с !report"})
+			Text: "❌ Для репорта необходимо ответить на сообщение с !report",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 	if target.From.ID == update.Message.From.ID{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Вы не можете зарепортить себя"})
+			Text: "❌ Вы не можете зарепортить себя",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 	
@@ -268,7 +345,10 @@ func Report(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(
 			&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
-				Text: "❌ Я не могу зарепортить себя"})
+				Text: "❌ Я не могу зарепортить себя",
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},})
 		return 
 	}
 
@@ -290,11 +370,17 @@ func Report(bot *telego.Bot, update *telego.Update) {
 			ChatID: telego.ChatID{ID: admin.MemberUser().ID},
 			Text: text,
 			ParseMode: telego.ModeHTML,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
 		})
 		if err == nil {
 			bot.SendMessage(&telego.SendMessageParams{
 				ChatID: update.Message.Chat.ChatID(),
 				Text: fmt.Sprintf("✅ Админ %v получил уведомление", admin.MemberUser().ID),
+				ReplyParameters: &telego.ReplyParameters{
+					MessageID: update.Message.MessageID,
+				},
 			})
 			return 
 		}
@@ -305,6 +391,9 @@ func Report(bot *telego.Bot, update *telego.Update) {
 ❌ Нет доступных админов. Админ должен быть админом 
 в этой группе и должен запустить бота командой /start 
 в личных сообщениях.`,
+	ReplyParameters: &telego.ReplyParameters{
+		MessageID: update.Message.MessageID,
+	},
 	})
 }
 
@@ -312,7 +401,11 @@ func Status(bot *telego.Bot, update *telego.Update) {
 	if update.Message.Chat.Type != "group" && update.Message.Chat.Type != "supergroup"{
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
-			Text: "❌ Команду !status можно использовать только в группе или супергруппе"})
+			Text: "❌ Команду !status можно использовать только в группе или супергруппе",
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
+		})
 		return
 	}
 
@@ -322,6 +415,9 @@ func Status(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
 			Text: text,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
 		})
 
 	} else {
@@ -330,6 +426,9 @@ func Status(bot *telego.Bot, update *telego.Update) {
 		bot.SendMessage(&telego.SendMessageParams{
 			ChatID: update.Message.Chat.ChatID(),
 			Text: text,
+			ReplyParameters: &telego.ReplyParameters{
+				MessageID: update.Message.MessageID,
+			},
 		})
 	}
 }
